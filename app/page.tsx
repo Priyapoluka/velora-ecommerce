@@ -8,13 +8,7 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
-  const products: {
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-  rating: number;
-}[] = [
+  const products = [
   {
     name: "Vitamin C Serum",
     price: 799,
@@ -43,13 +37,7 @@ export default function Home() {
     category: "Skincare",
     rating: 4.5,
   },
-  {
-    name: "Hydrating Face Cream",
-    price: 699,
-    image: "/products/cream.jpg",
-    category: "Face Care",
-    rating: 4.9,
-  },
+  
   {
     name: "Lip Balm",
     price: 299,
@@ -71,6 +59,92 @@ export default function Home() {
     category: "Sun Care",
     rating: 4.8,
   },
+  {
+  name: "Hair Growth Serum",
+  price: 599,
+  image: "/products/hair-care.jpg",
+  category: "Hair Care",
+  rating: 4.7,
+},
+
+{
+  name: "Vanilla Body Wash",
+  price: 449,
+  image: "/products/vanilla-bodywash.jpg",
+  category: "Body Wash",
+  rating: 4.8,
+},
+
+{
+  name: "Rose Body Wash",
+  price: 399,
+  image: "/products/rose-bodywash.jpg",
+  category: "Body Wash",
+  rating: 4.7,
+},
+
+{
+  name: "Rosemary Hair Growth Serum",
+  price: 599,
+  image: "/products/hairr-care.jpg",
+  category: "Hair Care",
+  rating: 4.9,
+},
+
+{
+  name: "Onion Hair Oil",
+  price: 499,
+  image: "/products/onion-hair-oil.jpg",
+  category: "Hair Care",
+  rating: 4.8,
+},
+
+{
+  name: "Strawberry Lip Balm",
+  price: 249,
+  image: "/products/strawberry-lipbalm.jpg",
+  category: "Lip Care",
+  rating: 4.8,
+},
+
+{
+  name: "Cherry Lip Gloss",
+  price: 349,
+  image: "/products/cherry-lipgloss.jpg",
+  category: "Lip Care",
+  rating: 4.7,
+},
+{
+  name: "Coffee Body Scrub",
+  price: 549,
+  image: "/products/coffee.jpg",
+  category: "Body Wash",
+  rating: 4.9,
+},
+{
+  name: "Lip Care Combo",
+  price: 599,
+  image: "/products/lip-combo.jpg",
+  category: "Combos",
+  rating: 4.8,
+},
+
+{
+  name: "Hair Growth Combo",
+  price: 999,
+  image: "/products/hair-combo.jpg",
+  category: "Combos",
+  rating: 4.9,
+},
+
+{
+  name: "Body Care Combo",
+  price: 1099,
+  image: "/products/body-combo.jpg",
+  category: "Combos",
+  rating: 4.8,
+},
+
 ];
 
 const totalPrice = cartItems.reduce((total, item) => {
@@ -130,14 +204,48 @@ const totalPrice = cartItems.reduce((total, item) => {
 };
 
   return (
-    <main className="min-h-screen bg-pink-50">
-      <nav className="bg-pink-500 text-white p-4 shadow-md flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Velora ✨</h1>
+    <main className="min-h-screen bg-gradient-to-b from-pink-50 via-rose-50 to-purple-50">
+      <nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 className="text-3xl font-bold">
+  Velora ✨
+</h1>
 
-        <div className="bg-white text-pink-600 px-4 py-2 rounded-full font-bold">
-          🛒 {cartItems.length}
-        </div>
+        <div className="flex items-center gap-6 text-2xl">
+
+  <button className="relative">
+    ❤️
+    <span className="absolute -top-2 -right-3 bg-pink-500 text-white text-xs px-2 rounded-full">
+      {wishlist.length}
+    </span>
+  </button>
+
+  <button className="relative">
+    🛒
+    <span className="absolute -top-2 -right-3 bg-pink-500 text-white text-xs px-2 rounded-full">
+      {cartItems.length}
+    </span>
+  </button>
+
+</div>
       </nav>
+
+
+{/* Hero Banner */}
+<section className="bg-gradient-to-r from-pink-200 to-purple-200 py-16 text-center">
+  <h2 className="text-6xl font-bold text-pink-700 mb-4">
+    Glow Naturally ✨
+  </h2>
+
+  <p className="text-xl text-pink-800 mb-6">
+    Premium Beauty & Skincare Products
+  </p>
+
+  <button className="bg-pink-500 text-white px-8 py-3 rounded-xl">
+    Shop Now
+  </button>
+</section>
+
+
 
       <section className="text-center py-12">
         <h2 className="text-5xl font-bold text-pink-700 mb-4">
@@ -149,86 +257,6 @@ const totalPrice = cartItems.reduce((total, item) => {
         </p>
       </section>
 
-      {/* Cart */}
-      <div className="bg-white mx-8 mb-6 p-6 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold mb-4">
-          🛒 Cart ({cartItems.length})
-        </h2>
-
-        {cartItems.length === 0 ? (
-          <p>Your cart is empty.</p>
-        ) : (
-          <ul className="space-y-3">
-            {cartItems.map((item, index) => (
-              <li
-                key={index}
-                className="flex justify-between items-center border-b pb-2"
-              >
-                <span>{item}</span>
-
-                <button
-                  onClick={() => removeFromCart(item)}
-                  className="bg-red-500 text-white px-3 py-1 rounded-lg"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Checkout */}
-<div className="bg-white mx-8 mb-6 p-6 rounded-xl shadow-lg">
-  <h2 className="text-2xl font-bold mb-4">
-    🧾 Checkout
-  </h2>
-
-  <p className="text-lg mb-2">
-    Total Items: {cartItems.length}
-  </p>
-
-  <p className="text-xl font-bold text-pink-600 mb-4">
-    Total Amount: ₹{totalPrice}
-  </p>
-
-  <button
-    onClick={placeOrder}
-    className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600"
-  >
-    Place Order
-  </button>
-</div>
-
-      {/* Wishlist */}
-      <div className="bg-white mx-8 mb-6 p-6 rounded-xl shadow-lg">
-        <h2 className="text-2xl font-bold mb-4">
-          ❤️ Wishlist ({wishlist.length})
-        </h2>
-
-        {wishlist.length === 0 ? (
-          <p>Your wishlist is empty.</p>
-        ) : (
-          <ul className="space-y-3">
-            {wishlist.map((item, index) => (
-              <li
-                key={index}
-                className="flex justify-between items-center border-b pb-2"
-              >
-                <span>{item}</span>
-
-                <button
-                  onClick={() => removeFromWishlist(item)}
-                  className="bg-red-500 text-white px-3 py-1 rounded-lg"
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
       {/* Search */}
       <div className="mx-8 mb-6">
         <input
@@ -236,102 +264,190 @@ const totalPrice = cartItems.reduce((total, item) => {
           placeholder="Search products..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full p-4 border rounded-xl"
+          className="w-full p-4 border-2 border-pink-300 rounded-xl focus:outline-none focus:border-pink-500 text-pink-800 placeholder-pink-500"
         />
       </div>
 
-      {/* Categories */}
-      <div className="flex flex-wrap gap-3 mx-8 mb-8">
-        <button
-          onClick={() => setCategory("All")}
-          className="bg-pink-500 text-white px-4 py-2 rounded-lg"
-        >
-          All
-        </button>
+      <section className="px-8 py-12">
+  <h2 className="text-3xl font-bold text-center text-pink-700 mb-10">
+  Shop By Category 💖
+</h2>
 
-        <button
-          onClick={() => setCategory("Skincare")}
-          className="bg-pink-500 text-white px-4 py-2 rounded-lg"
-        >
-          Skincare
-        </button>
+<div className="grid grid-cols-2 md:grid-cols-5 gap-6 my-10">
 
-        <button
-          onClick={() => setCategory("Face Care")}
-          className="bg-pink-500 text-white px-4 py-2 rounded-lg"
-        >
-          Face Care
-        </button>
+  {/* All Products */}
+  <div
+    onClick={() => setCategory("All")}
+    className="text-center cursor-pointer hover:scale-105 transition"
+  >
+    <div className="h-48 rounded-3xl bg-gradient-to-r from-pink-400 to-purple-400 flex items-center justify-center">
+      <span className="text-white text-3xl font-bold">
+        All
+      </span>
+    </div>
 
-        <button
-          onClick={() => setCategory("Lip Care")}
-          className="bg-pink-500 text-white px-4 py-2 rounded-lg"
-        >
-          Lip Care
-        </button>
+    <h3 className="text-2xl font-bold text-pink-700 mt-3">
+      All Products
+    </h3>
+  </div>
+  
+  {/* Skincare */}
+  <div
+  onClick={() => setCategory("Skincare")}
+  className="text-center cursor-pointer hover:scale-105 transition"
+>
+    <img
+      src="/products/skincare.jpg"
+      alt="Skincare"
+      className="w-full h-48 object-cover rounded-3xl"
+    />
+    <h3 className="text-2xl font-bold text-pink-700 mt-3">
+      Skincare
+    </h3>
+  </div>
 
-        <button
-          onClick={() => setCategory("Sun Care")}
-          className="bg-pink-500 text-white px-4 py-2 rounded-lg"
-        >
-          Sun Care
-        </button>
-      </div>
+  {/* Lip Care */}
+  <div
+  onClick={() => setCategory("Lip Care")}
+  className="text-center cursor-pointer hover:scale-105 transition"
+>
+    <img
+      src="/products/lipcare.jpg"
+      alt="Lip Care"
+      className="w-full h-48 object-cover rounded-3xl"
+    />
+    <h3 className="text-2xl font-bold text-pink-700 mt-3">
+      Lip Care
+    </h3>
+  </div>
+
+  {/* Hair Care */}
+  <div
+  onClick={() => setCategory("Hair Care")}
+  className="text-center cursor-pointer hover:scale-105 transition"
+>
+    <img
+      src="/products/haircare.jpg"
+      alt="Hair Care"
+      className="w-full h-48 object-cover rounded-3xl"
+    />
+    <h3 className="text-2xl font-bold text-pink-700 mt-3">
+      Hair Care
+    </h3>
+  </div>
+
+  {/* Body Wash */}
+  <div
+  onClick={() => setCategory("Body Wash")}
+  className="text-center cursor-pointer hover:scale-105 transition"
+>
+    <img
+      src="/products/bodywash.jpg"
+      alt="Body Wash"
+      className="w-full h-48 object-cover rounded-3xl"
+    />
+    <h3 className="text-2xl font-bold text-pink-700 mt-3">
+      Body Wash
+    </h3>
+  </div>
+
+  {/* Combos */}
+  <div
+  onClick={() => setCategory("Combos")}
+  className="text-center cursor-pointer hover:scale-105 transition"
+>
+    <img
+      src="/products/combo.jpg"
+      alt="Combos"
+      className="w-full h-48 object-cover rounded-3xl"
+    />
+    <h3 className="text-2xl font-bold text-pink-700 mt-3">
+      Combos
+    </h3>
+  </div>
+</div>
+
+</section>
 
       {/* Products */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-8">
         {products
-          .filter((product) =>
-            product.name.toLowerCase().includes(search.toLowerCase())
-          )
-          .filter((product) =>
-            category === "All"
-              ? true
-              : product.category === category
-          )
-          .map((product, index) => (
+  .filter((product) =>
+    product.name.toLowerCase().includes(search.toLowerCase())
+  )
+  .filter((product) =>
+    category === "All"
+      ? true
+      : product.category === category
+  )
+  .map((product, index) => (
             <div
               key={index}
-              className="bg-white p-6 rounded-xl shadow-lg"
+              className="bg-pink-50 mb-6 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition duration-300"
             >
               <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-lg mb-4"
-              />
+  src={product.image}
+  alt={product.name}
+  className="w-full h-48 object-cover rounded-lg mb-4"
+/>
 
-              <h3 className="text-xl font-bold">
-                {product.name}
-              </h3>
+<span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs">
+  🔥 Bestseller
+</span>
 
-              <p className="text-gray-500">
+<h3 className="text-xl font-bold text-pink-700 mt-3">
+  {product.name}
+</h3>
+
+<p className="text-pink-500 font-medium">
   {product.category}
 </p>
 
 <p className="text-yellow-500 font-semibold">
   ⭐ {product.rating}
 </p>
-
-<p className="text-pink-600 font-bold my-2">
-  ₹{product.price}
-</p>
+              <p className="text-pink-600 font-bold my-2">
+                ₹{product.price}
+              </p>
 
               <button
                 onClick={() => addToCart(product.name)}
                 className="w-full bg-pink-500 text-white py-2 rounded-lg"
               >
-                Add to Cart
+                🛒 Add to Cart
               </button>
 
               <button
                 onClick={() => addToWishlist(product.name)}
-                className="w-full mt-2 bg-purple-500 text-white py-2 rounded-lg"
+                className="w-full mt-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 rounded-lg hover:opacity-90"
               >
                 ❤️ Add to Wishlist
               </button>
             </div>
           ))}
-      </div>
+              </div>
+
+      
+      {/* Footer */}
+      <footer className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-center py-8">
+        <h2 className="text-2xl font-bold mb-3">
+          Velora ✨
+        </h2>
+
+        <p>Beauty • Skincare • Self Care</p>
+
+        <div className="mt-4 space-y-1">
+          <p>Shop</p>
+          <p>About</p>
+          <p>Contact</p>
+          <p>Privacy Policy</p>
+        </div>
+
+        <p className="mt-6">
+          © 2026 Velora. All Rights Reserved.
+        </p>
+      </footer>
+
     </main>
   );
 }
