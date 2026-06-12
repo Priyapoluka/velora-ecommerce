@@ -4,9 +4,13 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [cartItems, setCartItems] = useState<string[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
+const [wishlist, setWishlist] = useState<string[]>([]);
+const [search, setSearch] = useState("");
+const [category, setCategory] = useState("All");
+const [cartOpen, setCartOpen] = useState(false);
+const [wishlistOpen, setWishlistOpen] = useState(false);
+const [showPayment, setShowPayment] = useState(false);
+const [paymentMethod, setPaymentMethod] = useState("");
 
   const products = [
   {
@@ -189,47 +193,106 @@ const totalPrice = cartItems.reduce((total, item) => {
     );
   };
 
-  const placeOrder = () => {
-  if (cartItems.length === 0) {
-    alert("Your cart is empty!");
+  const handlePayment = () => {
+  if (!paymentMethod) {
+    alert("Select a payment method");
     return;
   }
 
   alert(
-    `Order placed successfully!\n\nItems: ${cartItems.length}\nTotal: ₹${totalPrice}`
+    `🎉 Order Placed Successfully!\n\nPayment: ${paymentMethod}\nTotal: ₹${totalPrice}`
   );
 
   setCartItems([]);
   localStorage.removeItem("cartItems");
+  setPaymentMethod("");
+  setShowPayment(false);
+  setCartOpen(false);
 };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-pink-50 via-rose-50 to-purple-50">
-      <nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md flex justify-between items-center">
-        <h1 className="text-3xl font-bold">
-  Velora ✨
-</h1>
 
-        <div className="flex items-center gap-6 text-2xl">
+  <nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md flex justify-between items-center">
 
-  <button className="relative">
-    ❤️
-    <span className="absolute -top-2 -right-3 bg-pink-500 text-white text-xs px-2 rounded-full">
-      {wishlist.length}
-    </span>
-  </button>
+  <h1 className="text-3xl font-bold">
+    Velora ✨
+  </h1>
 
-  <button className="relative">
-    🛒
-    <span className="absolute -top-2 -right-3 bg-pink-500 text-white text-xs px-2 rounded-full">
-      {cartItems.length}
-    </span>
-  </button>
+  <div className="flex items-center gap-4">
 
-</div>
-      </nav>
+    <button className="bg-white text-pink-600 px-4 py-2 rounded-lg">
+      Login
+    </button>
+
+    <button
+      onClick={() => setWishlistOpen(true)}
+      className="relative text-2xl"
+    >
+      ❤️
+      <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 rounded-full">
+        {wishlist.length}
+      </span>
+    </button>
+
+    <button
+      onClick={() => setCartOpen(true)}
+      className="relative text-2xl"
+    >
+      🛒
+      <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 rounded-full">
+        {cartItems.length}
+      </span>
+    </button>
+
+  </div>
+
+</nav>
+
+{/* Wishlist Drawer */}
+{wishlistOpen && (
+  <div className="fixed inset-0 bg-black/40 z-50">
+    <div className="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl p-6 overflow-y-auto">
+
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-pink-700">
+          Wishlist ❤️
+        </h2>
+
+        <button
+          onClick={() => setWishlistOpen(false)}
+          className="text-xl"
+        >
+          ✖
+        </button>
+      </div>
+
+      {wishlist.length === 0 ? (
+        <p>Your wishlist is empty.</p>
+      ) : (
+        wishlist.map((item, index) => (
+          <div
+            key={index}
+            className="flex justify-between border-b py-3"
+          >
+            <span>{item}</span>
+
+            <button
+              onClick={() => removeFromWishlist(item)}
+              className="text-red-500"
+            >
+              Remove
+            </button>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+)}
 
 
+
+      
 {/* Hero Banner */}
 <section className="bg-gradient-to-r from-pink-200 to-purple-200 py-16 text-center">
   <h2 className="text-6xl font-bold text-pink-700 mb-4">
@@ -244,8 +307,6 @@ const totalPrice = cartItems.reduce((total, item) => {
     Shop Now
   </button>
 </section>
-
-
 
       <section className="text-center py-12">
         <h2 className="text-5xl font-bold text-pink-700 mb-4">
@@ -409,24 +470,150 @@ const totalPrice = cartItems.reduce((total, item) => {
               <p className="text-pink-600 font-bold my-2">
                 ₹{product.price}
               </p>
+<button
+  onClick={() => addToCart(product.name)}
+  className="w-full bg-pink-500 text-white py-2 rounded-lg"
+>
+  🛒 Add to Cart
+</button>
+
+<button
+  onClick={() => addToWishlist(product.name)}
+  className="w-full mt-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 rounded-lg hover:opacity-90"
+>
+  ❤️ Add to Wishlist
+</button>
+
+</div>
+))}
+</div>
+
+{/* Cart Drawer */}
+{cartOpen && (
+  <div className="fixed inset-0 bg-black/40 z-50">
+    <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl p-6 overflow-y-auto">
+      
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-pink-700">
+          My Cart 🛒
+        </h2>
+
+        <button
+          onClick={() => setCartOpen(false)}
+          className="text-xl"
+        >
+          ✖
+        </button>
+      </div>
+
+      {cartItems.length === 0 ? (
+        <p className="text-gray-500">
+          Your cart is empty.
+        </p>
+      ) : (
+        <>
+          {cartItems.map((item, index) => (
+            <div
+              key={index}
+              className="flex justify-between items-center border-b py-3"
+            >
+              <span>{item}</span>
 
               <button
-                onClick={() => addToCart(product.name)}
-                className="w-full bg-pink-500 text-white py-2 rounded-lg"
+                onClick={() => removeFromCart(item)}
+                className="text-red-500"
               >
-                🛒 Add to Cart
-              </button>
-
-              <button
-                onClick={() => addToWishlist(product.name)}
-                className="w-full mt-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 rounded-lg hover:opacity-90"
-              >
-                ❤️ Add to Wishlist
+                Remove
               </button>
             </div>
           ))}
-              </div>
 
+          <div className="mt-6">
+  <p className="text-lg font-bold text-pink-700">
+    Total: ₹{totalPrice}
+  </p>
+
+  <button
+    onClick={() => setShowPayment(true)}
+    className="w-full mt-4 bg-pink-500 text-white py-3 rounded-lg"
+  >
+    Proceed to Checkout 💳
+  </button>
+</div>
+
+  </>
+)}
+
+{showPayment && (
+  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="bg-white p-8 rounded-xl w-96 shadow-xl">
+      <h2 className="text-2xl font-bold text-pink-600 mb-4">
+        Payment Method 💳
+      </h2>
+
+      <div className="space-y-3">
+
+        <label className="flex gap-2">
+          <input
+            type="radio"
+            name="payment"
+            value="UPI"
+            onChange={(e) =>
+              setPaymentMethod(e.target.value)
+            }
+          />
+          UPI
+        </label>
+
+        <label className="flex gap-2">
+          <input
+            type="radio"
+            name="payment"
+            value="Credit/Debit Card"
+            onChange={(e) =>
+              setPaymentMethod(e.target.value)
+            }
+          />
+          Credit / Debit Card
+        </label>
+
+        <label className="flex gap-2">
+          <input
+            type="radio"
+            name="payment"
+            value="Cash on Delivery"
+            onChange={(e) =>
+              setPaymentMethod(e.target.value)
+            }
+          />
+          Cash on Delivery
+        </label>
+
+      </div>
+
+      <div className="flex gap-3 mt-6">
+
+        <button
+          onClick={() => setShowPayment(false)}
+          className="flex-1 border border-pink-500 text-pink-500 py-2 rounded-lg"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handlePayment}
+          className="flex-1 bg-pink-500 text-white py-2 rounded-lg"
+        >
+          Pay Now
+        </button>
+
+      </div>
+    </div>
+  </div>
+)}
+    </div>
+  </div>
+)}
       
       {/* Footer */}
       <footer className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-center py-8">
@@ -447,7 +634,6 @@ const totalPrice = cartItems.reduce((total, item) => {
           © 2026 Velora. All Rights Reserved.
         </p>
       </footer>
-
     </main>
   );
 }
