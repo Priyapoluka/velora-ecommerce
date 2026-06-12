@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  UserButton,
+  SignInButton,
+  SignUpButton,
+  useUser,
+} from "@clerk/nextjs";
 
 export default function Home() {
   const [cartItems, setCartItems] = useState<string[]>([]);
@@ -221,32 +227,28 @@ const totalPrice = cartItems.reduce((total, item) => {
 
   <div className="flex items-center gap-4">
 
-    <button className="bg-white text-pink-600 px-4 py-2 rounded-lg">
-      Login
-    </button>
+  <button
+    onClick={() => setWishlistOpen(true)}
+    className="relative text-2xl"
+  >
+    ❤️
+    <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 rounded-full">
+      {wishlist.length}
+    </span>
+  </button>
 
-    <button
-      onClick={() => setWishlistOpen(true)}
-      className="relative text-2xl"
-    >
-      ❤️
-      <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 rounded-full">
-        {wishlist.length}
-      </span>
-    </button>
+  <button
+    onClick={() => setCartOpen(true)}
+    className="relative text-2xl"
+  >
+    🛒
+    <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 rounded-full">
+      {cartItems.length}
+    </span>
+  </button>
 
-    <button
-      onClick={() => setCartOpen(true)}
-      className="relative text-2xl"
-    >
-      🛒
-      <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 rounded-full">
-        {cartItems.length}
-      </span>
-    </button>
-
-  </div>
-
+  <UserButton />
+</div>
 </nav>
 
 {/* Wishlist Drawer */}
