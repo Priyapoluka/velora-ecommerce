@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   UserButton,
   SignInButton,
@@ -205,51 +206,91 @@ const totalPrice = cartItems.reduce((total, item) => {
     return;
   }
 
+  const newOrder = {
+  items: cartItems,
+  total: totalPrice,
+  payment: paymentMethod,
+  date: new Date().toLocaleString(),
+};
+
+const existingOrders = JSON.parse(
+  localStorage.getItem("orders") || "[]"
+);
+
+localStorage.setItem(
+  "orders",
+  JSON.stringify([...existingOrders, newOrder])
+);
   alert(
     `🎉 Order Placed Successfully!\n\nPayment: ${paymentMethod}\nTotal: ₹${totalPrice}`
   );
 
   setCartItems([]);
   localStorage.removeItem("cartItems");
+
+  setCartItems([]);
+  localStorage.removeItem("cartItems");
   setPaymentMethod("");
   setShowPayment(false);
   setCartOpen(false);
-};
+ };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-pink-50 via-rose-50 to-purple-50">
 
-  <nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md flex justify-between items-center">
+ <nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md flex justify-between items-center">
 
   <h1 className="text-3xl font-bold">
     Velora ✨
   </h1>
 
-  <div className="flex items-center gap-4">
+  <div className="flex items-center gap-6">
+    
+    <button
+      onClick={() => setWishlistOpen(true)}
+      className="relative text-3xl"
+    >
+      ❤️
+      <span className="absolute -top-3 -right-3 bg-pink-600 text-white text-xs px-2 rounded-full">
+        {wishlist.length}
+      </span>
+    </button>
 
-  <button
-    onClick={() => setWishlistOpen(true)}
-    className="relative text-2xl"
-  >
-    ❤️
-    <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 rounded-full">
-      {wishlist.length}
-    </span>
-  </button>
+    <button
+      onClick={() => setCartOpen(true)}
+      className="relative text-3xl"
+    >
+      🛒
+      <span className="absolute -top-3 -right-3 bg-pink-600 text-white text-xs px-2 rounded-full">
+        {cartItems.length}
+      </span>
+    </button>
 
-  <button
-    onClick={() => setCartOpen(true)}
-    className="relative text-2xl"
-  >
-    🛒
-    <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs px-2 rounded-full">
-      {cartItems.length}
-    </span>
-  </button>
+    <UserButton />
 
-  <UserButton />
-</div>
+<Link
+  href="/about"
+  className="text-lg hover:text-pink-200"
+>
+  About
+</Link>
+
+<Link
+  href="/contact"
+  className="text-lg hover:text-pink-200"
+>
+  Contact
+</Link>
+<Link
+  href="/orders"
+  className="text-lg hover:text-pink-200"
+>
+  Orders
+</Link>
+  </div>
+
 </nav>
+
 
 {/* Wishlist Drawer */}
 {wishlistOpen && (
@@ -291,9 +332,6 @@ const totalPrice = cartItems.reduce((total, item) => {
     </div>
   </div>
 )}
-
-
-
       
 {/* Hero Banner */}
 <section className="bg-gradient-to-r from-pink-200 to-purple-200 py-16 text-center">
@@ -461,6 +499,12 @@ const totalPrice = cartItems.reduce((total, item) => {
 <h3 className="text-xl font-bold text-pink-700 mt-3">
   {product.name}
 </h3>
+<Link
+  href={`/products/${index}`}
+  className="text-pink-500 underline"
+>
+  View Details
+</Link>
 
 <p className="text-pink-500 font-medium">
   {product.category}
