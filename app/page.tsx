@@ -26,7 +26,7 @@ const [wishlistLoaded, setWishlistLoaded] = useState(false);
 const [search, setSearch] = useState("");
 const [category, setCategory] = useState("All");
 const [cartOpen, setCartOpen] = useState(false);
-const [wishlistOpen, setWishlistOpen] = useState(false);
+const [cartLoaded, setCartLoaded] = useState(false);
 const [showPayment, setShowPayment] = useState(false);
 const [paymentMethod, setPaymentMethod] = useState("");
 const [toast, setToast] = useState("");
@@ -182,20 +182,24 @@ const totalPrice = cartItems.reduce((total, item) => {
 }, 0);
 
   useEffect(() => {
-    const savedCart = localStorage.getItem("cartItems");
+  const savedCart = localStorage.getItem("cartItems");
 
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
-  }, []);
+  if (savedCart) {
+    setCartItems(JSON.parse(savedCart));
+  }
+
+  setCartLoaded(true);
+}, []);
 
   
   useEffect(() => {
+  if (cartLoaded) {
     localStorage.setItem(
       "cartItems",
       JSON.stringify(cartItems)
     );
-  }, [cartItems]);
+  }
+}, [cartItems, cartLoaded]);
 
   const showToast = (message: string) => {
   setToast(message);
@@ -270,28 +274,38 @@ const increaseQuantity = (productName: string) => {
   );
 };
 
- const addToWishlist = (productName: string) => {
+const addToWishlist = (productName: string) => {
   if (!isSignedIn) {
-    showToast("🔒 Please login first");
+    router.push("/sign-in");
     return;
   }
 
   if (wishlist.includes(productName)) {
-    showToast("❤️ Already in Wishlist");
-    return;
+    const updatedWishlist = wishlist.filter(
+      (item) => item !== productName
+    );
+
+    setWishlist(updatedWishlist);
+
+    localStorage.setItem(
+      "wishlist",
+      JSON.stringify(updatedWishlist)
+    );
+
+    showToast("💔 Removed from Wishlist");
+  } else {
+    const updatedWishlist = [...wishlist, productName];
+
+    setWishlist(updatedWishlist);
+
+    localStorage.setItem(
+      "wishlist",
+      JSON.stringify(updatedWishlist)
+    );
+
+    showToast("❤️ Added to Wishlist");
   }
-
-  setWishlist([...wishlist, productName]);
-  showToast("❤️ Added to Wishlist");
 };
-  
-
-  const removeFromWishlist = (productName: string) => {
-  setWishlist((prev) =>
-    prev.filter((item) => item !== productName)
-  );
-};
-
  useEffect(() => {
   const savedWishlist = localStorage.getItem("wishlist");
 
@@ -368,171 +382,52 @@ localStorage.setItem(
   </div>
 )}
 
-<nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md flex justify-between items-center">  <h1 className="text-2xl md:text-3xl font-bold">
-    Velora ✨
-  </h1>
+<nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md">
+  <div className="flex justify-between items-center">
+    <h1 className="text-2xl md:text-3xl font-bold">
+      Velora ✨
+    </h1>
 
-<div className="flex items-center gap-6">
+    <div className="flex items-center gap-4">
       <button
-      onClick={() => setWishlistOpen(true)}
-      className="relative text-3xl"
-    >
-      ❤️
-      <span className="absolute -top-3 -right-3 bg-pink-600 text-white text-xs px-2 rounded-full">
-        {wishlist.length}
-      </span>
-    </button>
+        onClick={() => setCartOpen(true)}
+        className="relative text-3xl"
+      >
+        🛒
+        <span className="absolute -top-3 -right-3 bg-pink-600 text-white text-xs px-2 rounded-full">
+          {cartItems.length}
+        </span>
+      </button>
 
-    <button
-      onClick={() => setCartOpen(true)}
-      className="relative text-3xl"
-    >
-      🛒
-      <span className="absolute -top-3 -right-3 bg-pink-600 text-white text-xs px-2 rounded-full">
-        {cartItems.length}
-      </span>
-    </button>
-
-    <UserButton />
-
-<Link
-  href="/about"
-  className="text-lg hover:text-pink-200"
->
-  About
-</Link>
-
-<Link
-  href="/contact"
-  className="text-lg hover:text-pink-200"
->
-  Contact
-</Link>
-<Link
-  href="/orders"
-  className="text-lg hover:text-pink-200"
->
-  Orders
-</Link>
-
-<Link
-  href="/profile"
-  className="text-lg hover:text-pink-200"
->
-  Profile
-</Link>
-  </div>
-
-</nav>
-
-
-{/* Wishlist Drawer */}
-{wishlistOpen && (
-  <div className="fixed inset-0 bg-black/40 z-50">
-    <div className="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl p-6 overflow-y-auto">
-
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-pink-700">
-          Wishlist ❤️
-        </h2>
-
-        <button
-          onClick={() => setWishlistOpen(false)}
-          className="text-xl"
+      {isSignedIn ? (
+        <Link
+          href="/profile"
+          className="text-base md:text-lg hover:text-pink-200"
         >
-          ✖
-        </button>
-      </div>
-
-      {wishlist.length === 0 ? (
-<div className="text-center py-10">
-  <div className="text-6xl mb-4">❤️</div>
-
-  <h3 className="text-xl font-bold text-pink-700">
-    Wishlist is Empty
-  </h3>
-
-  <p className="text-gray-500 mt-2">
-    Save your favorite products here.
-  </p>
-
-  <button
-    onClick={() => setWishlistOpen(false)}
-    className="mt-5 bg-pink-500 text-white px-5 py-2 rounded-xl"
-  >
-    Explore Products
-  </button>
-</div>
+          👤 Profile
+        </Link>
       ) : (
-        wishlist.map((item, index) => {
-  const product = products.find(
-    (p) => p.name === item
-  );
+        <div className="flex gap-2">
+          <SignInButton mode="modal">
+            <button className="bg-white text-pink-600 px-3 md:px-4 py-2 rounded-lg font-semibold text-sm md:text-base">
+              Sign In
+            </button>
+          </SignInButton>
 
-  return (
-    <div
-      key={index}
-      className="flex gap-4 border-b py-4 items-center"
-    >
-      <img
-        src={product?.image}
-        alt={item}
-        className="w-20 h-20 rounded-xl object-cover"
-      />
-
-      <div className="flex-1">
-        <h3 className="font-bold text-pink-700">
-          {item}
-        </h3>
-
-        <p className="text-pink-500">
-          ₹{product?.price}
-        </p>
-
-        <div className="flex gap-2 mt-2">
-          <button
-            onClick={() => removeFromWishlist(item)}
-            className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm"
-          >
-            Remove
-          </button>
-
-          <button
-  onClick={() => {
-    addToCart(item);
-  }}
-  className="bg-pink-500 text-white px-3 py-1 rounded-lg text-sm"
->
-  🛒 Add to Cart
-</button>
+          <SignUpButton mode="modal">
+            <button className="bg-pink-700 text-white px-3 md:px-4 py-2 rounded-lg font-semibold text-sm md:text-base">
+              Sign Up
+            </button>
+          </SignUpButton>
         </div>
-      </div>
-    </div>
-  );
-})
       )}
     </div>
   </div>
-)}
+</nav>
+
       
 {/* Hero Banner */}
-<section className="bg-gradient-to-r from-pink-200 to-purple-200 py-12 md:py-16 text-center px-4">
-  <h2 className="text-3xl md:text-6xl font-bold text-pink-700 mb-4">    Glow Naturally ✨
-  </h2>
 
-<p className="text-base md:text-xl text-pink-800 mb-6 px-4">    Premium Beauty & Skincare Products
-  </p>
-<button
-  onClick={() =>
-    document
-      .getElementById("products")
-      ?.scrollIntoView({ behavior: "smooth" })
-  }
-  className="bg-pink-500 hover:bg-pink-600 text-white px-6 md:px-8 py-3 rounded-xl transition"
->
-  Shop Now 🛍️
-</button>
-</section>
 
       <section className="text-center py-12">
         <h2 className="text-5xl font-bold text-pink-700 mb-4">
@@ -551,104 +446,110 @@ localStorage.setItem(
           placeholder="Search products..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full p-4 border-2 border-pink-300 rounded-xl focus:outline-none focus:border-pink-500 text-pink-800 placeholder-pink-500"
+          className="w-full px-4 py-3 border-2 border-pink-300 rounded-xl focus:outline-none focus:border-pink-500 text-pink-800 placeholder-pink-500"
         />
       </div>
 
-<section className="px-4 md:px-8 py-12">  <h2 className="text-3xl font-bold text-center text-pink-700 mb-10">
-  Shop By Category 💖
-</h2>
+{search.trim() === "" && (
+  <section className="px-4 md:px-8 py-12">
+    <h2 className="text-3xl font-bold text-center text-pink-700 mb-10">
+      Shop By Category 💖
+    </h2>
 
-<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 my-10">
+    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 my-10">
+      {/* All Products */}
+      <div
+        onClick={() => setCategory("All")}
+        className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
+      >
+        <div className="h-48 rounded-3xl bg-gradient-to-r from-pink-400 to-purple-400 flex items-center justify-center">
+          <span className="text-white text-3xl font-bold">
+            All
+          </span>
+        </div>
 
-  {/* All Products */}
-  <div
-    onClick={() => setCategory("All")}
-    className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
-  >
-    <div className="h-48 rounded-3xl bg-gradient-to-r from-pink-400 to-purple-400 flex items-center justify-center">
-      <span className="text-white text-3xl font-bold">
-        All
-      </span>
+        <h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">
+          All Products
+        </h3>
+      </div>
+
+      {/* Skincare */}
+      <div
+        onClick={() => setCategory("Skincare")}
+        className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
+      >
+        <img
+          src="/products/skincare.jpg"
+          alt="Skincare"
+          className="w-full h-36 md:h-48 object-cover rounded-3xl"
+        />
+        <h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">
+          Skincare
+        </h3>
+      </div>
+
+      {/* Lip Care */}
+      <div
+        onClick={() => setCategory("Lip Care")}
+        className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
+      >
+        <img
+          src="/products/lipcare.jpg"
+          alt="Lip Care"
+          className="w-full h-36 md:h-48 object-cover rounded-3xl"
+        />
+        <h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">
+          Lip Care
+        </h3>
+      </div>
+
+      {/* Hair Care */}
+      <div
+        onClick={() => setCategory("Hair Care")}
+        className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
+      >
+        <img
+          src="/products/haircare.jpg"
+          alt="Hair Care"
+          className="w-full h-36 md:h-48 object-cover rounded-3xl"
+        />
+        <h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">
+          Hair Care
+        </h3>
+      </div>
+
+      {/* Body Wash */}
+      <div
+        onClick={() => setCategory("Body Wash")}
+        className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
+      >
+        <img
+          src="/products/bodywash.jpg"
+          alt="Body Wash"
+          className="w-full h-36 md:h-48 object-cover rounded-3xl"
+        />
+        <h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">
+          Body Wash
+        </h3>
+      </div>
+
+      {/* Combos */}
+      <div
+        onClick={() => setCategory("Combos")}
+        className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
+      >
+        <img
+          src="/products/combo.jpg"
+          alt="Combos"
+          className="w-full h-36 md:h-48 object-cover rounded-3xl"
+        />
+        <h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">
+          Combos
+        </h3>
+      </div>
     </div>
-
-<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">      All Products
-    </h3>
-  </div>
-  
-  {/* Skincare */}
-  <div
-  onClick={() => setCategory("Skincare")}
-  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
->
-    <img
-      src="/products/skincare.jpg"
-      alt="Skincare"
-className="w-full h-36 md:h-48 object-cover rounded-3xl"    />
-<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">      Skincare
-    </h3>
-  </div>
-
-  {/* Lip Care */}
-  <div
-  onClick={() => setCategory("Lip Care")}
-  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
->
-    <img
-      src="/products/lipcare.jpg"
-      alt="Lip Care"
-      className="w-full h-48 object-cover rounded-3xl"
-    />
-<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">      Lip Care
-    </h3>
-  </div>
-
-  {/* Hair Care */}
-  <div
-  onClick={() => setCategory("Hair Care")}
-  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
->
-    <img
-      src="/products/haircare.jpg"
-      alt="Hair Care"
-      className="w-full h-48 object-cover rounded-3xl"
-    />
-<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">
-        Hair Care
-    </h3>
-  </div>
-
-  {/* Body Wash */}
-  <div
-  onClick={() => setCategory("Body Wash")}
-  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
->
-    <img
-      src="/products/bodywash.jpg"
-      alt="Body Wash"
-      className="w-full h-48 object-cover rounded-3xl"
-    />
-<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">      Body Wash
-    </h3>
-  </div>
-
-  {/* Combos */}
-  <div
-  onClick={() => setCategory("Combos")}
-  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
->
-    <img
-      src="/products/combo.jpg"
-      alt="Combos"
-      className="w-full h-48 object-cover rounded-3xl"
-    />
-<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">  
-      Combos
-    </h3>
-  </div>
-</div>
-
-</section>
+  </section>
+)}
 
 {/* Products */}
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 p-4 md:p-8">
@@ -663,8 +564,8 @@ className="w-full h-36 md:h-48 object-cover rounded-3xl"    />
     )
     .map((product, index) => (
       <div
-        key={index}
-        className="bg-pink-50 p-4 md:ptransition-all duration-300 ease-in-out-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 hover:-translate-y-2 "
+        key={index}className="bg-pink-50 p-4 md:p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 hover:-translate-y-2 transition-all duration-300 ease-in-out"
+        
       >
         <img
           src={product.image}
@@ -672,22 +573,28 @@ className="w-full h-36 md:h-48 object-cover rounded-3xl"    />
           className="w-full h-40 md:h-48 object-cover rounded-lg mb-4"
         />
 
-        {index < 4 && (
-  <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs">
-    🔥 Bestseller
-  </span>
+        {search.trim() !== "" && (
+  <div className="px-4 md:px-8 mt-6 mb-2">
+    <h2 className="text-3xl font-bold text-pink-700">
+      🔍 Search Results for "{search}"
+    </h2>
+
+    <p className="text-gray-500 mt-2">
+      {
+        products.filter((product) =>
+          product.name
+            .toLowerCase()
+            .includes(search.toLowerCase())
+        ).length
+      } products found
+    </p>
+  </div>
 )}
 
+      
         <h3 className="text-lg md:text-xl font-bold text-pink-700 mt-3">
           {product.name}
         </h3>
-
-        <Link
-          href={`/products/${index}`}
-          className="text-pink-500 underline"
-        >
-          View Details
-        </Link>
 
         <p className="text-pink-500 font-medium">
           {product.category}
@@ -754,7 +661,7 @@ className="w-full h-36 md:h-48 object-cover rounded-3xl"    />
 {/* Cart Drawer */}
 {cartOpen && (
   <div className="fixed inset-0 bg-black/40 z-50">
-    <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-2xl p-6 overflow-y-auto">
+    <div className="fixed right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl p-6 overflow-y-auto">
       
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-pink-700">
@@ -856,7 +763,7 @@ className="w-full h-36 md:h-48 object-cover rounded-3xl"    />
 
 {showPayment && (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white p-8 rounded-xl w-96 shadow-xl">
+    <div className="bg-white p-5 md:p-8 rounded-xl w-[90%] max-w-md shadow-xl">
       <h2 className="text-2xl font-bold text-pink-600 mb-4">
         Payment Method 💳
       </h2>
