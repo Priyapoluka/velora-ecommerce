@@ -8,16 +8,28 @@ import {
   SignUpButton,
   useUser,
 } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [cartItems, setCartItems] = useState<string[]>([]);
+  const { isSignedIn } = useUser();
+  const router = useRouter();
+  
+
+  const [cartItems, setCartItems] = useState<
+    { name: string; quantity: number }[]
+  >([]);
+
+  const [addedCart, setAddedCart] = useState<string[]>([]);
+
 const [wishlist, setWishlist] = useState<string[]>([]);
+const [wishlistLoaded, setWishlistLoaded] = useState(false);
 const [search, setSearch] = useState("");
 const [category, setCategory] = useState("All");
 const [cartOpen, setCartOpen] = useState(false);
 const [wishlistOpen, setWishlistOpen] = useState(false);
 const [showPayment, setShowPayment] = useState(false);
 const [paymentMethod, setPaymentMethod] = useState("");
+const [toast, setToast] = useState("");
 
   const products = [
   {
@@ -159,8 +171,14 @@ const [paymentMethod, setPaymentMethod] = useState("");
 ];
 
 const totalPrice = cartItems.reduce((total, item) => {
-  const product = products.find((p) => p.name === item);
-  return total + (product?.price || 0);
+  const product = products.find(
+    (p) => p.name === item.name
+  );
+
+  return (
+    total +
+    (product?.price || 0) * item.quantity
+  );
 }, 0);
 
   useEffect(() => {
@@ -171,6 +189,7 @@ const totalPrice = cartItems.reduce((total, item) => {
     }
   }, []);
 
+  
   useEffect(() => {
     localStorage.setItem(
       "cartItems",
@@ -178,32 +197,123 @@ const totalPrice = cartItems.reduce((total, item) => {
     );
   }, [cartItems]);
 
+  const showToast = (message: string) => {
+  setToast(message);
+
+  setTimeout(() => {
+    setToast("");
+  }, 2000);
+};
+
   const addToCart = (productName: string) => {
-    setCartItems([...cartItems, productName]);
-  };
+  if (!isSignedIn) {
+    showToast("🔒 Please login first");
+    return;
+  }
 
-  const removeFromCart = (itemToRemove: string) => {
-    setCartItems(
-      cartItems.filter((item) => item !== itemToRemove)
+  setCartItems((prev) => {
+    const existing = prev.find(
+      (item) => item.name === productName
     );
-  };
 
-  const addToWishlist = (productName: string) => {
-    if (!wishlist.includes(productName)) {
-      setWishlist([...wishlist, productName]);
+    if (existing) {
+      return prev.map((item) =>
+        item.name === productName
+          ? {
+              ...item,
+              quantity: item.quantity + 1,
+            }
+          : item
+      );
     }
-  };
+
+    return [
+      ...prev,
+      {
+        name: productName,
+        quantity: 1,
+      },
+    ];
+  });
+
+  if (!addedCart.includes(productName)) {
+    setAddedCart((prev) => [...prev, productName]);
+  }
+  showToast("🛒 Added to Cart");
+};
+
+const removeFromCart = (productName: string) => {
+  setCartItems((prev) =>
+    prev
+      .map((item) =>
+        item.name === productName
+          ? {
+              ...item,
+              quantity: item.quantity - 1,
+            }
+          : item
+      )
+      .filter((item) => item.quantity > 0)
+  );
+};
+
+const increaseQuantity = (productName: string) => {
+  setCartItems((prev) =>
+    prev.map((item) =>
+      item.name === productName
+        ? {
+            ...item,
+            quantity: item.quantity + 1,
+          }
+        : item
+    )
+  );
+};
+
+ const addToWishlist = (productName: string) => {
+  if (!isSignedIn) {
+    showToast("🔒 Please login first");
+    return;
+  }
+
+  if (wishlist.includes(productName)) {
+    showToast("❤️ Already in Wishlist");
+    return;
+  }
+
+  setWishlist([...wishlist, productName]);
+  showToast("❤️ Added to Wishlist");
+};
+  
 
   const removeFromWishlist = (productName: string) => {
-    setWishlist(
-      wishlist.filter((item) => item !== productName)
+  setWishlist((prev) =>
+    prev.filter((item) => item !== productName)
+  );
+};
+
+ useEffect(() => {
+  const savedWishlist = localStorage.getItem("wishlist");
+
+  if (savedWishlist) {
+    setWishlist(JSON.parse(savedWishlist));
+  }
+
+  setWishlistLoaded(true);
+}, []);
+
+useEffect(() => {
+  if (wishlistLoaded) {
+    localStorage.setItem(
+      "wishlist",
+      JSON.stringify(wishlist)
     );
-  };
+  }
+}, [wishlist, wishlistLoaded]);
 
   const handlePayment = () => {
   if (!paymentMethod) {
-    alert("Select a payment method");
-    return;
+showToast("⚠️ Select a payment method");    return;
   }
 
   const newOrder = {
@@ -221,15 +331,12 @@ localStorage.setItem(
   "orders",
   JSON.stringify([...existingOrders, newOrder])
 );
-  alert(
-    `🎉 Order Placed Successfully!\n\nPayment: ${paymentMethod}\nTotal: ₹${totalPrice}`
-  );
-
+  showToast("🎉 Order Placed Successfully");
+  router.push("/success");
   setCartItems([]);
   localStorage.removeItem("cartItems");
 
-  setCartItems([]);
-  localStorage.removeItem("cartItems");
+ 
   setPaymentMethod("");
   setShowPayment(false);
   setCartOpen(false);
@@ -238,15 +345,35 @@ localStorage.setItem(
   return (
     <main className="min-h-screen bg-gradient-to-b from-pink-50 via-rose-50 to-purple-50">
 
- <nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md flex justify-between items-center">
+      {toast && (
+  <div
+  className="
+  fixed
+  top-6
+  right-6
+  z-[9999]
+  bg-gradient-to-r
+  from-pink-500
+  to-purple-500
+  text-white
+  px-6
+  py-4
+  rounded-2xl
+  shadow-2xl
+  animate-bounce
+  font-semibold
+"
+>
+    {toast}
+  </div>
+)}
 
-  <h1 className="text-3xl font-bold">
+<nav className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-4 shadow-md flex justify-between items-center">  <h1 className="text-2xl md:text-3xl font-bold">
     Velora ✨
   </h1>
 
-  <div className="flex items-center gap-6">
-    
-    <button
+<div className="flex items-center gap-6">
+      <button
       onClick={() => setWishlistOpen(true)}
       className="relative text-3xl"
     >
@@ -287,6 +414,13 @@ localStorage.setItem(
 >
   Orders
 </Link>
+
+<Link
+  href="/profile"
+  className="text-lg hover:text-pink-200"
+>
+  Profile
+</Link>
   </div>
 
 </nav>
@@ -311,41 +445,93 @@ localStorage.setItem(
       </div>
 
       {wishlist.length === 0 ? (
-        <p>Your wishlist is empty.</p>
-      ) : (
-        wishlist.map((item, index) => (
-          <div
-            key={index}
-            className="flex justify-between border-b py-3"
-          >
-            <span>{item}</span>
+<div className="text-center py-10">
+  <div className="text-6xl mb-4">❤️</div>
 
-            <button
-              onClick={() => removeFromWishlist(item)}
-              className="text-red-500"
-            >
-              Remove
-            </button>
-          </div>
-        ))
+  <h3 className="text-xl font-bold text-pink-700">
+    Wishlist is Empty
+  </h3>
+
+  <p className="text-gray-500 mt-2">
+    Save your favorite products here.
+  </p>
+
+  <button
+    onClick={() => setWishlistOpen(false)}
+    className="mt-5 bg-pink-500 text-white px-5 py-2 rounded-xl"
+  >
+    Explore Products
+  </button>
+</div>
+      ) : (
+        wishlist.map((item, index) => {
+  const product = products.find(
+    (p) => p.name === item
+  );
+
+  return (
+    <div
+      key={index}
+      className="flex gap-4 border-b py-4 items-center"
+    >
+      <img
+        src={product?.image}
+        alt={item}
+        className="w-20 h-20 rounded-xl object-cover"
+      />
+
+      <div className="flex-1">
+        <h3 className="font-bold text-pink-700">
+          {item}
+        </h3>
+
+        <p className="text-pink-500">
+          ₹{product?.price}
+        </p>
+
+        <div className="flex gap-2 mt-2">
+          <button
+            onClick={() => removeFromWishlist(item)}
+            className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm"
+          >
+            Remove
+          </button>
+
+          <button
+  onClick={() => {
+    addToCart(item);
+  }}
+  className="bg-pink-500 text-white px-3 py-1 rounded-lg text-sm"
+>
+  🛒 Add to Cart
+</button>
+        </div>
+      </div>
+    </div>
+  );
+})
       )}
     </div>
   </div>
 )}
       
 {/* Hero Banner */}
-<section className="bg-gradient-to-r from-pink-200 to-purple-200 py-16 text-center">
-  <h2 className="text-6xl font-bold text-pink-700 mb-4">
-    Glow Naturally ✨
+<section className="bg-gradient-to-r from-pink-200 to-purple-200 py-12 md:py-16 text-center px-4">
+  <h2 className="text-3xl md:text-6xl font-bold text-pink-700 mb-4">    Glow Naturally ✨
   </h2>
 
-  <p className="text-xl text-pink-800 mb-6">
-    Premium Beauty & Skincare Products
+<p className="text-base md:text-xl text-pink-800 mb-6 px-4">    Premium Beauty & Skincare Products
   </p>
-
-  <button className="bg-pink-500 text-white px-8 py-3 rounded-xl">
-    Shop Now
-  </button>
+<button
+  onClick={() =>
+    document
+      .getElementById("products")
+      ?.scrollIntoView({ behavior: "smooth" })
+  }
+  className="bg-pink-500 hover:bg-pink-600 text-white px-6 md:px-8 py-3 rounded-xl transition"
+>
+  Shop Now 🛍️
+</button>
 </section>
 
       <section className="text-center py-12">
@@ -369,17 +555,16 @@ localStorage.setItem(
         />
       </div>
 
-      <section className="px-8 py-12">
-  <h2 className="text-3xl font-bold text-center text-pink-700 mb-10">
+<section className="px-4 md:px-8 py-12">  <h2 className="text-3xl font-bold text-center text-pink-700 mb-10">
   Shop By Category 💖
 </h2>
 
-<div className="grid grid-cols-2 md:grid-cols-5 gap-6 my-10">
+<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 my-10">
 
   {/* All Products */}
   <div
     onClick={() => setCategory("All")}
-    className="text-center cursor-pointer hover:scale-105 transition"
+    className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
   >
     <div className="h-48 rounded-3xl bg-gradient-to-r from-pink-400 to-purple-400 flex items-center justify-center">
       <span className="text-white text-3xl font-bold">
@@ -387,82 +572,77 @@ localStorage.setItem(
       </span>
     </div>
 
-    <h3 className="text-2xl font-bold text-pink-700 mt-3">
-      All Products
+<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">      All Products
     </h3>
   </div>
   
   {/* Skincare */}
   <div
   onClick={() => setCategory("Skincare")}
-  className="text-center cursor-pointer hover:scale-105 transition"
+  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
 >
     <img
       src="/products/skincare.jpg"
       alt="Skincare"
-      className="w-full h-48 object-cover rounded-3xl"
-    />
-    <h3 className="text-2xl font-bold text-pink-700 mt-3">
-      Skincare
+className="w-full h-36 md:h-48 object-cover rounded-3xl"    />
+<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">      Skincare
     </h3>
   </div>
 
   {/* Lip Care */}
   <div
   onClick={() => setCategory("Lip Care")}
-  className="text-center cursor-pointer hover:scale-105 transition"
+  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
 >
     <img
       src="/products/lipcare.jpg"
       alt="Lip Care"
       className="w-full h-48 object-cover rounded-3xl"
     />
-    <h3 className="text-2xl font-bold text-pink-700 mt-3">
-      Lip Care
+<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">      Lip Care
     </h3>
   </div>
 
   {/* Hair Care */}
   <div
   onClick={() => setCategory("Hair Care")}
-  className="text-center cursor-pointer hover:scale-105 transition"
+  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
 >
     <img
       src="/products/haircare.jpg"
       alt="Hair Care"
       className="w-full h-48 object-cover rounded-3xl"
     />
-    <h3 className="text-2xl font-bold text-pink-700 mt-3">
-      Hair Care
+<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">
+        Hair Care
     </h3>
   </div>
 
   {/* Body Wash */}
   <div
   onClick={() => setCategory("Body Wash")}
-  className="text-center cursor-pointer hover:scale-105 transition"
+  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
 >
     <img
       src="/products/bodywash.jpg"
       alt="Body Wash"
       className="w-full h-48 object-cover rounded-3xl"
     />
-    <h3 className="text-2xl font-bold text-pink-700 mt-3">
-      Body Wash
+<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">      Body Wash
     </h3>
   </div>
 
   {/* Combos */}
   <div
   onClick={() => setCategory("Combos")}
-  className="text-center cursor-pointer hover:scale-105 transition"
+  className="text-center cursor-pointer hover:scale-105 hover:-translate-y-2 transition"
 >
     <img
       src="/products/combo.jpg"
       alt="Combos"
       className="w-full h-48 object-cover rounded-3xl"
     />
-    <h3 className="text-2xl font-bold text-pink-700 mt-3">
+<h3 className="text-lg md:text-2xl font-bold text-pink-700 mt-3">  
       Combos
     </h3>
   </div>
@@ -470,69 +650,106 @@ localStorage.setItem(
 
 </section>
 
-      {/* Products */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-8">
-        {products
-  .filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  )
-  .filter((product) =>
-    category === "All"
-      ? true
-      : product.category === category
-  )
-  .map((product, index) => (
-            <div
-              key={index}
-              className="bg-pink-50 mb-6 p-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition duration-300"
-            >
-              <img
-  src={product.image}
-  alt={product.name}
-  className="w-full h-48 object-cover rounded-lg mb-4"
-/>
+{/* Products */}
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 p-4 md:p-8">
+  {products
+    .filter((product) =>
+      product.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter((product) =>
+      category === "All"
+        ? true
+        : product.category === category
+    )
+    .map((product, index) => (
+      <div
+        key={index}
+        className="bg-pink-50 p-4 md:ptransition-all duration-300 ease-in-out-6 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 hover:-translate-y-2 "
+      >
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-40 md:h-48 object-cover rounded-lg mb-4"
+        />
 
-<span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs">
-  🔥 Bestseller
-</span>
+        {index < 4 && (
+  <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs">
+    🔥 Bestseller
+  </span>
+)}
 
-<h3 className="text-xl font-bold text-pink-700 mt-3">
-  {product.name}
-</h3>
-<Link
-  href={`/products/${index}`}
-  className="text-pink-500 underline"
->
-  View Details
-</Link>
+        <h3 className="text-lg md:text-xl font-bold text-pink-700 mt-3">
+          {product.name}
+        </h3>
 
-<p className="text-pink-500 font-medium">
-  {product.category}
-</p>
+        <Link
+          href={`/products/${index}`}
+          className="text-pink-500 underline"
+        >
+          View Details
+        </Link>
 
-<p className="text-yellow-500 font-semibold">
-  ⭐ {product.rating}
-</p>
-              <p className="text-pink-600 font-bold my-2">
-                ₹{product.price}
-              </p>
-<button
-  onClick={() => addToCart(product.name)}
-  className="w-full bg-pink-500 text-white py-2 rounded-lg"
->
-  🛒 Add to Cart
-</button>
+        <p className="text-pink-500 font-medium">
+          {product.category}
+        </p>
 
-<button
-  onClick={() => addToWishlist(product.name)}
-  className="w-full mt-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 rounded-lg hover:opacity-90"
->
-  ❤️ Add to Wishlist
-</button>
+        <p className="text-yellow-500 font-semibold">
+          ⭐ {product.rating}
+        </p>
 
+        <p className="text-lg md:text-xl text-pink-600 font-bold my-2">
+          ₹{product.price}
+        </p>
+
+        {cartItems.find((item) => item.name === product.name) ? (
+  <div className="w-full flex items-center justify-between bg-pink-100 rounded-lg mt-2">
+    <button
+      onClick={() => removeFromCart(product.name)}
+      className="px-4 py-2 text-pink-700 font-bold"
+    >
+      -
+    </button>
+
+    <span className="font-bold text-pink-700">
+      {
+        cartItems.find((item) => item.name === product.name)
+          ?.quantity
+      }
+    </span>
+
+    <button
+      onClick={() => increaseQuantity(product.name)}
+      className="px-4 py-2 text-pink-700 font-bold"
+    >
+      +
+    </button>
+  </div>
+) : (
+  <button
+    onClick={() => addToCart(product.name)}
+    className="w-full py-2 rounded-lg bg-pink-500 text-white"
+  >
+     Add to Cart 🛒
+  </button>
+)}
+
+        <button
+          onClick={() => addToWishlist(product.name)}
+          className={`w-full mt-2 py-2 rounded-lg text-white transition ${
+            wishlist.includes(product.name)
+              ? "bg-red-500"
+              : "bg-gradient-to-r from-pink-500 to-purple-500"
+          }`}
+        >
+          {wishlist.includes(product.name)
+            ? "❤️ Wishlisted"
+            : "🤍 Add to Wishlist"}
+        </button>
+      </div>
+    ))}
 </div>
-))}
-</div>
+
+
 
 {/* Cart Drawer */}
 {cartOpen && (
@@ -553,26 +770,73 @@ localStorage.setItem(
       </div>
 
       {cartItems.length === 0 ? (
-        <p className="text-gray-500">
-          Your cart is empty.
-        </p>
-      ) : (
-        <>
-          {cartItems.map((item, index) => (
-            <div
-              key={index}
-              className="flex justify-between items-center border-b py-3"
-            >
-              <span>{item}</span>
+  <div className="text-center py-10">
+    <div className="text-6xl mb-4">🛒</div>
 
-              <button
-                onClick={() => removeFromCart(item)}
-                className="text-red-500"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
+    <h3 className="text-xl font-bold text-pink-700">
+      Your Cart is Empty
+    </h3>
+
+    <p className="text-gray-500 mt-2">
+      Looks like you haven't added anything yet.
+    </p>
+
+    <button
+      onClick={() => setCartOpen(false)}
+      className="mt-5 bg-pink-500 text-white px-5 py-2 rounded-xl"
+    >
+      Continue Shopping
+    </button>
+  </div>
+) : (
+        <>
+
+        {cartItems.map((item, index) => {
+  const product = products.find(
+    (p) => p.name === item.name
+  );
+
+  return (
+    <div
+      key={index}
+      className="flex gap-4 border-b py-4 items-center"
+    >
+      <img
+        src={product?.image}
+        alt={item.name}
+        className="w-20 h-20 rounded-xl object-cover"
+      />
+
+      <div className="flex-1">
+        <h3 className="font-bold text-pink-700">
+          {item.name}
+        </h3>
+
+        <p className="text-pink-500">
+          ₹{product?.price}
+        </p>
+
+        <div className="flex items-center gap-3 mt-2">
+          <button
+            onClick={() => removeFromCart(item.name)}
+            className="bg-pink-200 px-3 rounded"
+          >
+            -
+          </button>
+
+          <span>{item.quantity}</span>
+
+          <button
+            onClick={() => increaseQuantity(item.name)}
+            className="bg-pink-500 text-white px-3 rounded"
+          >
+            +
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+})}
 
           <div className="mt-6">
   <p className="text-lg font-bold text-pink-700">
